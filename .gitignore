@@ -1,0 +1,10 @@
+*.png
+*.svg
+.vscode/
+__pycache__/
+pacman_module/__pycache__/
+.DS_Store
+*.pyc
+Entropy_csv
+Graphs
+Part_3-Reasoning_over_time/plots.py
