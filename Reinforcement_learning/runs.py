@@ -161,12 +161,19 @@ if __name__ == '__main__':
         1.0, frameTime=0.1) if (not args.silentdisplay) else textDisplay.NullGraphics()
     
     games = []
-    
-    games = runGames( lay, agent, gagts, display, numGames=8, record=False,
-        numTraining=5, catchExceptions=False, timeout=5)
-    
-    total_score, total_computation_time, total_expanded_nodes = games[-1].run()
 
-    print("Total score : " + str(total_score))
-    print("Total computation time (seconds) : " + str(total_computation_time))
-    print("Total expanded nodes : " + str(total_expanded_nodes))
+    num_games = 205
+    num_training = 200
+    
+    games = runGames( lay, agent, gagts, display, numGames=num_games, record=False,
+        numTraining=num_training, catchExceptions=False, timeout=5)
+    
+    total_score = 0
+
+    for g in games:
+        total_score += g.state.getScore()
+
+    print("Mean Total Score : " + str(total_score/len(games)) + " at " + str(num_training) + " training games")
+
+
+

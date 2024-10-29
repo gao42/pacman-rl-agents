@@ -19,7 +19,7 @@ class PacmanAgent(Agent):
         self.args = args
 
         self.alpha = float(0.2)
-        self.epsilon = float(0.9)
+        self.epsilon = float(0.05)
         self.gamma = float(0.8)
 
         # Q values
@@ -49,6 +49,23 @@ class PacmanAgent(Agent):
         bool: True with probability p, False otherwise.
         """
         return (random.random() < p)
+    
+    def all_values_same(self, counter):
+        """
+        Check if all values in the Counter are the same.
+        
+        Args:
+        counter (Counter): A Counter object with actions as keys and Q-values as values.
+        
+        Returns:
+        bool: True if all values are the same, False otherwise.
+        """
+        if not counter:
+            return True
+        
+        first_value = next(iter(counter.values()))
+        return all(value == first_value for value in counter.values())
+
 
     # returns the Q value for a given state
     def getQ_Value(self, state, action):
@@ -80,27 +97,33 @@ class PacmanAgent(Agent):
             return self.training_num
 
     def getMaxQ_Action(self, state):
-        legal = state.getLegalActions()
+        legals = state.getLegalActions()
         # in the first half of trianing, the agent is forced not to stop
         # or turn back while not being chased by the ghost
         if self.getEpisodesTotal()*1.0/self.getTrainingNum()<0.5:
-            if Directions.STOP in legal:
-                legal.remove(Directions.STOP)
+            if Directions.STOP in legals:
+                legals.remove(Directions.STOP)
             if len(self.last_action) > 0 and state.getNumAgents() > 1:
                 last_action = self.last_action[-1]
                 distance0 = state.getPacmanPosition()[0]- state.getGhostPosition(1)[0]
                 distance1 = state.getPacmanPosition()[1]- state.getGhostPosition(1)[1]
                 if math.sqrt(distance0**2 + distance1**2) > 2:
-                    if (Directions.REVERSE[last_action] in legal) and len(legal)>1:
-                        legal.remove(Directions.REVERSE[last_action])
-        tmp = Counter()
-        for action in legal:
-          tmp[action] = self.getQ_Value(state, action)
+                    if (Directions.REVERSE[last_action] in legals) and len(legals)>1:
+                        legals.remove(Directions.REVERSE[last_action])
+            
+        state_actions = Counter()
+        for action in legals:
+          state_actions[action] = self.getQ_Value(state, action)
         
-        #return tmp.argMax()
+        # Check if all Q-values are the same
+        if self.all_values_same(state_actions):
+             best_action =  random.choice(legals)
+        else:
+            # Get the action with the highest Q-value
+            best_action = max(state_actions, key=state_actions.get)
 
-        # Get the action with the highest Q-value
-        best_action = max(tmp, key=tmp.get)
+        foodLoc = state.getFood()
+
         return best_action
 
 
