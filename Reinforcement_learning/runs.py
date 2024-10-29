@@ -1,5 +1,8 @@
 import imp
 import os
+import csv
+import statistics
+import matplotlib.pyplot as plt
 from argparse import ArgumentParser, ArgumentTypeError
 
 from pacman_module.pacman import runGame
@@ -162,18 +165,40 @@ if __name__ == '__main__':
     
     games = []
 
-    num_games = 205
-    num_training = 200
-    
-    games = runGames( lay, agent, gagts, display, numGames=num_games, record=False,
-        numTraining=num_training, catchExceptions=False, timeout=5)
-    
-    total_score = 0
+    num_games = 30
+    num_training = [25,50,100,200,400,800,1600,3200,6400]
 
-    for g in games:
-        total_score += g.state.getScore()
+    mean_scores = []
 
-    print("Mean Total Score : " + str(total_score/len(games)) + " at " + str(num_training) + " training games")
+    # Write the header to the CSV file once
+    with open('game_scores.csv', mode='w', newline='') as file:
+        writer = csv.writer(file)
+        writer.writerow(['Num Training Games', 'Scores', 'Mean Score', 'Standard Deviation'])
 
+    for nt in num_training:
+        games = runGames( lay, agent, gagts, display, numGames=(nt+10), record=False,
+            numTraining=nt, catchExceptions=False, timeout=5)
 
+        scores = [g.state.getScore() for g in games]
+        mean_score = statistics.mean(scores)
+        std_dev_score = statistics.stdev(scores)
+        mean_scores.append(mean_score)
+
+        # Write to CSV file
+        with open('game_scores.csv', mode='a', newline='') as file:
+            writer = csv.writer(file)
+            writer.writerow([nt, scores, mean_score, std_dev_score])
+
+        print("Mean Total Score : " + str(mean_score) + " at " + str(num_training) + " training games")
+        print("Standard Deviation of Scores : " + str(std_dev_score))
+
+    # Plot mean scores versus number of training games
+    plt.figure(figsize=(10, 6))
+    plt.plot(num_training, mean_scores, marker='o', linestyle='-', color='b')
+    plt.xlabel('Number of Training Games')
+    plt.ylabel('Mean Score')
+    plt.title('Mean Scores vs. Number of Training Games')
+    plt.grid(True)
+    plt.savefig('mean_scores_vs_num_training.png')
+    plt.show()
 
