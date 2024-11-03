@@ -7,8 +7,7 @@ from argparse import ArgumentParser, ArgumentTypeError
 
 from pacman_module.pacman import runGame
 from pacman_module.pacman import runGames
-from pacman_module.ghostAgents import\
-    GreedyGhost, LeftyGhost, RandyGhost
+from pacman_module.ghostAgents import GreedyGhost, SmartyGhost, DumbyGhost
 import numpy as np
 
 from pacman_module import util, layout
@@ -73,8 +72,8 @@ def load_agent_from_file(filepath, class_module):
 
 ghosts = {}
 ghosts["greedy"] = GreedyGhost
-ghosts["randy"] = RandyGhost
-ghosts["lefty"] = LeftyGhost
+ghosts["smarty"] = SmartyGhost
+ghosts["dumby"] = DumbyGhost
 
 if __name__ == '__main__':
     usage = """
@@ -97,7 +96,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ghostagent',
         help='Ghost agent available in the `ghostAgents` module.',
-        choices=[ "greedy", "lefty", "randy"], default="randy")
+       choices=["dumby", "greedy", "smarty"], default="greedy")
     parser.add_argument(
         '--layout',
         help='Maze layout (from layout folder).',
@@ -168,9 +167,12 @@ if __name__ == '__main__':
     num_games = 30
     #num_training = [25,50,100,200,400,800,1600,3200,6400]
     #num_training = [10,20,40,60,80,100,120,140,160,180,200,300,400,500,600,700,800,900]
-    num_training = [25,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
+    #num_training = [25,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
+    num_training = [25,50,100,200,300,400,500]
+    #num_training = [0]
 
     mean_scores = []
+    win_rates = []
 
     # Write the header to the CSV file once
     with open('game_scores.csv', mode='w', newline='') as file:
@@ -186,21 +188,36 @@ if __name__ == '__main__':
         std_dev_score = statistics.stdev(scores)
         mean_scores.append(mean_score)
 
+        wins = [game.state.isWin() for game in games]
+        win_rate = wins.count(True) / float(len(wins))
+        win_rates.append(win_rate*100)
+
         # Write to CSV file
         with open('game_scores.csv', mode='a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([nt, scores, mean_score, std_dev_score])
+            writer.writerow([nt, scores, mean_score, std_dev_score, win_rate])
 
         print("Mean Total Score : " + str(mean_score) + " at " + str(num_training) + " training games")
         print("Standard Deviation of Scores : " + str(std_dev_score))
+        print("Win Rate : " + str(win_rate * 100) + "%")
 
-    # Plot mean scores versus number of training games
-    plt.figure(figsize=(10, 6))
-    plt.plot(num_training, mean_scores, marker='o', linestyle='-', color='b')
-    plt.xlabel('Number of Training Games')
-    plt.ylabel('Mean Score')
-    plt.title('Mean Scores vs. Number of Training Games')
-    plt.grid(True)
-    plt.savefig('mean_scores_vs_num_training.png')
-    plt.show()
+ # Plot mean scores and win rates versus number of training games
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12))
 
+# Plot mean scores
+ax1.plot(num_training, mean_scores, marker='o', linestyle='-', color='b')
+ax1.set_xlabel('Number of Training Games')
+ax1.set_ylabel('Mean Score')
+ax1.set_title('Mean Scores vs. Number of Training Games')
+ax1.grid(True)
+
+# Plot win rates
+ax2.plot(num_training, win_rates, marker='o', linestyle='-', color='r')
+ax2.set_xlabel('Number of Training Games')
+ax2.set_ylabel('Win Rate (%)')
+ax2.set_title('Win Rates vs. Number of Training Games')
+ax2.grid(True)
+
+plt.tight_layout()
+plt.savefig('mean_scores_and_win_rates_vs_num_training.png')
+plt.show()
