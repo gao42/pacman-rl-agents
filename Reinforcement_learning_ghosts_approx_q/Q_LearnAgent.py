@@ -127,7 +127,7 @@ class PacmanAgent(Agent):
 
         features = Counter()
 
-        features["bias"] = 1.0
+        #features["bias"] = 1.0
         features["nearest-food"] = 0.0
         features["nearest-ghost"] = 0.0 
         features["num-ghosts-1-move-away"] = 0.0

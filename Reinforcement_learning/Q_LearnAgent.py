@@ -20,7 +20,7 @@ class PacmanAgent(Agent):
 
         self.alpha = float(0.2)
         self.epsilon = float(0.05)
-        self.gamma = float(0.8)
+        self.gamma = float(0.9)
 
         # Q values
         #self.Q_values = dict() # or util.Counter()

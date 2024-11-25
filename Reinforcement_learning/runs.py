@@ -3,6 +3,7 @@ import os
 import csv
 import statistics
 import matplotlib.pyplot as plt
+import time
 from argparse import ArgumentParser, ArgumentTypeError
 
 from pacman_module.pacman import runGame
@@ -168,39 +169,59 @@ if __name__ == '__main__':
     num_games = 30
     #num_training = [25,50,100,200,400,800,1600,3200,6400]
     #num_training = [10,20,40,60,80,100,120,140,160,180,200,300,400,500,600,700,800,900]
-    num_training = [25,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
+    #num_training = [25,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
+    num_training = [25,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500]
 
     mean_scores = []
+    execution_times = []
 
     # Write the header to the CSV file once
     with open('game_scores.csv', mode='w', newline='') as file:
         writer = csv.writer(file)
-        writer.writerow(['Num Training Games', 'Scores', 'Mean Score', 'Standard Deviation'])
+        writer.writerow(['Num Training Games', 'Scores', 'Mean Score', 'Standard Deviation', 'Execution Time'])
 
     for nt in num_training:
-        games = runGames( lay, agent, gagts, display, numGames=(nt+10), record=False,
-            numTraining=nt, catchExceptions=False, timeout=5)
+        start_time = time.time()
+        
+        games = runGames(lay, agent, gagts, display, numGames=(nt + 5), record=False,
+                         numTraining=nt, catchExceptions=False, timeout=5)
+        
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        execution_times.append(elapsed_time)
 
         scores = [g.state.getScore() for g in games]
         mean_score = statistics.mean(scores)
         std_dev_score = statistics.stdev(scores)
         mean_scores.append(mean_score)
 
-        # Write to CSV file
+        # Append to the CSV file
         with open('game_scores.csv', mode='a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([nt, scores, mean_score, std_dev_score])
+            writer.writerow([nt, scores, mean_score, std_dev_score, elapsed_time])
 
-        print("Mean Total Score : " + str(mean_score) + " at " + str(num_training) + " training games")
+        print("Mean Total Score : " + str(mean_score) + " at " + str(nt) + " training games")
         print("Standard Deviation of Scores : " + str(std_dev_score))
+        print("Execution Time : " + str(elapsed_time) + " seconds")
+
+    # Create a single figure with two subplots
+    fig, ax1 = plt.subplots(2, 1, figsize=(10, 12))
 
     # Plot mean scores versus number of training games
-    plt.figure(figsize=(10, 6))
-    plt.plot(num_training, mean_scores, marker='o', linestyle='-', color='b')
-    plt.xlabel('Number of Training Games')
-    plt.ylabel('Mean Score')
-    plt.title('Mean Scores vs. Number of Training Games')
-    plt.grid(True)
-    plt.savefig('mean_scores_vs_num_training.png')
-    plt.show()
+    ax1[0].plot(num_training, mean_scores, marker='o', linestyle='-', color='b')
+    ax1[0].set_xlabel('Number of Training Games')
+    ax1[0].set_ylabel('Mean Score')
+    ax1[0].set_title('Mean Scores vs. Number of Training Games')
+    ax1[0].grid(True)
 
+    # Plot execution time versus number of training games
+    ax1[1].plot(num_training, execution_times, marker='o', linestyle='-', color='r')
+    ax1[1].set_xlabel('Number of Training Games')
+    ax1[1].set_ylabel('Execution Time (seconds)')
+    ax1[1].set_title('Execution Time vs. Number of Training Games')
+    ax1[1].grid(True)
+
+    # Save the combined figure
+    plt.tight_layout()
+    plt.savefig('combined_plot.png')
+    plt.show()

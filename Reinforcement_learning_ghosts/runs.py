@@ -4,11 +4,13 @@ import csv
 import statistics
 import matplotlib.pyplot as plt
 from argparse import ArgumentParser, ArgumentTypeError
+import time
+import random
+import numpy as np
 
 from pacman_module.pacman import runGame
 from pacman_module.pacman import runGames
 from pacman_module.ghostAgents import GreedyGhost, SmartyGhost, DumbyGhost
-import numpy as np
 
 from pacman_module import util, layout
 from pacman_module import textDisplay, graphicsDisplay
@@ -75,7 +77,7 @@ ghosts["greedy"] = GreedyGhost
 ghosts["smarty"] = SmartyGhost
 ghosts["dumby"] = DumbyGhost
 
-if __name__ == '__main__':
+def main():
     usage = """
     USAGE:      python run.py <game_options> <agent_options>
     EXAMPLES:   (1) python run.py
@@ -88,7 +90,7 @@ if __name__ == '__main__':
         '--seed',
         help='Seed for random number generator',
         type=int,
-        default=1)
+        default=62) # 62 is the seed used in the project description, last 73 
     parser.add_argument(
         '--agentfile',
         help='Python file containing a `PacmanAgent` class.',
@@ -96,7 +98,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--ghostagent',
         help='Ghost agent available in the `ghostAgents` module.',
-       choices=["dumby", "greedy", "smarty"], default="greedy")
+       choices=["dumby", "greedy", "smarty"], default="smarty")
     parser.add_argument(
         '--layout',
         help='Maze layout (from layout folder).',
@@ -113,7 +115,6 @@ if __name__ == '__main__':
         '--silentdisplay',
         help="Disable the graphical display of the game.",
         action="store_true")
-    # Specific to Project III
     parser.add_argument(
         '--bsagentfile',
         help='Python file containing a `BeliefStateAgent` class.',
@@ -128,6 +129,10 @@ if __name__ == '__main__':
         type=float, default=0.5)
 
     args = parser.parse_args()
+
+    # Set random seed
+    random.seed(args.seed)
+    np.random.seed(args.seed)
 
     if (args.agentfile == "humanagent.py" and args.silentdisplay):
         print("Human agent cannot play without graphical display")
@@ -168,11 +173,12 @@ if __name__ == '__main__':
     #num_training = [25,50,100,200,400,800,1600,3200,6400]
     #num_training = [10,20,40,60,80,100,120,140,160,180,200,300,400,500,600,700,800,900]
     #num_training = [25,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500,1600,1700,1800,1900,2000]
-    num_training = [25,50,100,200,300,400,500]
+    num_training = [25,50,100,200,300,400,500,600,700,800,900,1000,1100,1200,1300,1400,1500]
     #num_training = [0]
 
     mean_scores = []
     win_rates = []
+    execution_times = []
 
     # Write the header to the CSV file once
     with open('game_scores.csv', mode='w', newline='') as file:
@@ -180,8 +186,12 @@ if __name__ == '__main__':
         writer.writerow(['Num Training Games', 'Scores', 'Mean Score', 'Standard Deviation'])
 
     for nt in num_training:
+        start_time = time.time()
         games = runGames( lay, agent, gagts, display, numGames=(nt+10), record=False,
             numTraining=nt, catchExceptions=False, timeout=5)
+        end_time = time.time()
+        execution_time = end_time - start_time
+        execution_times.append(execution_time)
 
         scores = [g.state.getScore() for g in games]
         mean_score = statistics.mean(scores)
@@ -195,29 +205,41 @@ if __name__ == '__main__':
         # Write to CSV file
         with open('game_scores.csv', mode='a', newline='') as file:
             writer = csv.writer(file)
-            writer.writerow([nt, scores, mean_score, std_dev_score, win_rate])
+            writer.writerow([nt, scores, mean_score, std_dev_score, win_rate, execution_time])
 
         print("Mean Total Score : " + str(mean_score) + " at " + str(num_training) + " training games")
         print("Standard Deviation of Scores : " + str(std_dev_score))
         print("Win Rate : " + str(win_rate * 100) + "%")
+        print("Execution Time : " + str(execution_time) + " seconds")
 
- # Plot mean scores and win rates versus number of training games
-fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 12))
+    # Plot mean scores, win rates, and execution times versus number of training games
+    fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(20, 15))
 
-# Plot mean scores
-ax1.plot(num_training, mean_scores, marker='o', linestyle='-', color='b')
-ax1.set_xlabel('Number of Training Games')
-ax1.set_ylabel('Mean Score')
-ax1.set_title('Mean Scores vs. Number of Training Games')
-ax1.grid(True)
+    # Plot mean scores
+    ax1.plot(num_training, mean_scores, marker='o', linestyle='-', color='b')
+    ax1.set_xlabel('Number of Training Games')
+    ax1.set_ylabel('Mean Score')
+    ax1.set_title('Mean Scores vs. Number of Training Games')
+    ax1.grid(True)
 
-# Plot win rates
-ax2.plot(num_training, win_rates, marker='o', linestyle='-', color='r')
-ax2.set_xlabel('Number of Training Games')
-ax2.set_ylabel('Win Rate (%)')
-ax2.set_title('Win Rates vs. Number of Training Games')
-ax2.grid(True)
+    # Plot win rates
+    ax2.plot(num_training, win_rates, marker='o', linestyle='-', color='r')
+    ax2.set_xlabel('Number of Training Games')
+    ax2.set_ylabel('Win Rate (%)')
+    ax2.set_title('Win Rates vs. Number of Training Games')
+    ax2.grid(True)
 
-plt.tight_layout()
-plt.savefig('mean_scores_and_win_rates_vs_num_training.png')
-plt.show()
+    # Plot execution times
+    ax3.plot(num_training, execution_times, marker='o', linestyle='-', color='g')
+    ax3.set_xlabel('Number of Training Games')
+    ax3.set_ylabel('Execution Time (seconds)')
+    ax3.set_title('Execution Times vs. Number of Training Games')
+    ax3.grid(True)
+
+    plt.tight_layout()
+    plt.subplots_adjust(hspace=0.25)  # Add space between plots
+    plt.savefig('mean_scores_win_rates_execution_times_vs_num_training.png')
+    plt.show()
+
+if __name__ == "__main__":
+    main()
