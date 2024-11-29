@@ -90,7 +90,7 @@ def main():
         '--seed',
         help='Seed for random number generator',
         type=int,
-        default=62) # 62 is the seed used in the project description, last 73 
+        default=43) # 62 is the seed used in the project description, last 73 
     parser.add_argument(
         '--agentfile',
         help='Python file containing a `PacmanAgent` class.',
@@ -188,7 +188,7 @@ def main():
     for nt in num_training:
         start_time = time.time()
         games = runGames( lay, agent, gagts, display, numGames=(nt+10), record=False,
-            numTraining=nt, catchExceptions=False, timeout=5)
+            numTraining=nt, catchExceptions=False, timeout=30)
         end_time = time.time()
         execution_time = end_time - start_time
         execution_times.append(execution_time)
