@@ -41,28 +41,12 @@ class PacmanAgent(Agent):
         # last action
         self.last_action = []
 
+    # Simulates flipping a coin with probability p of returning True.
     def coinFlip(self, p):
-        """
-        Simulates flipping a coin with probability p of returning True.
-        
-        Args:
-        p (float): The probability of returning True.
-        
-        Returns:
-        bool: True with probability p, False otherwise.
-        """
         return (random.random() < p)
     
+    # Check if all values in the Counter are the same.
     def allValuesSame(self, counter):
-        """
-        Check if all values in the Counter are the same.
-        
-        Args:
-        counter (Counter): A Counter object with actions as keys and Q-values as values.
-        
-        Returns:
-        bool: True if all values are the same, False otherwise.
-        """
         if not counter:
             return True
         
@@ -86,34 +70,11 @@ class PacmanAgent(Agent):
         return None
     
     def nearestGhostDist(self, state, posit, ghost, walls):
-        # grid = [(posit[0], posit[1], 0)]
-        # neighbors = set()
-        # while grid:
-        #     posit_x, posit_y, dist = grid.pop(0)
-        #     if (posit_x, posit_y) not in neighbors:
-        #         neighbors.add((posit_x, posit_y))
-
-        #         if ghost == [(posit_x, posit_y)]:
-        #             return dist
-
-        #         avaiable_neighbors = Actions.getLegalNeighbors((posit_x, posit_y), walls)
-        #         for nbr_x, nbr_y in avaiable_neighbors:
-        #             grid.append((nbr_x, nbr_y, dist+1))
-        # return None
-
         return math.sqrt((posit[0]-ghost[0])**2 + (posit[1]-ghost[1])**2)
 
+    # Returns a Counter of features for a given state and action.
     def getFeatures(self, state, action):
-        """
-        Returns a Counter of features for a given state and action.
-        
-        Args:
-        state (GameState): The current game state.
-        action (str): The action to be taken.
-        
-        Returns:
-        Counter: A Counter object with features as keys and feature values as values.
-        """
+
         food = state.getFood()
         walls = state.getWalls()
         ghosts = state.getGhostPositions()
@@ -127,7 +88,6 @@ class PacmanAgent(Agent):
 
         features = Counter()
 
-        #features["bias"] = 1.0
         features["nearest-food"] = 0.0
         features["nearest-ghost"] = 0.0 
         features["num-ghosts-1-move-away"] = 0.0
@@ -175,7 +135,7 @@ class PacmanAgent(Agent):
             return 0
         return max(q_list)
     
-        # return the maximum Q values of each state
+    # return the maximum Q values of each state
     def getMaxFeaturesQ_Values(self, state):
         q_list = []
         #for action in state.getLegalPacmanActions():
@@ -192,12 +152,11 @@ class PacmanAgent(Agent):
         q_value = self.getQ_Value(state,action)
         self.Q_values[(state,action)] = q + self.alpha*(reward + self.gamma*q_max - q)
 
-        # update Q value for a given state action pair
+    # update Q value for a given state action pair
     def updateFeaturesQ_Value(self, state, action, reward, q_max):
         q_value = self.getFeaturesQ_Value(state,action)
         #self.Q_values[(state,action)] = q + self.alpha*(reward + self.gamma*qmax - q)
 
-        #difference = reward + (self.discount * self.computeValueFromQValues(nextState) - self.getQValue(state, action))
         difference = reward + self.gamma*q_max - q_value
         features = self.getFeatures(state, action)
 
@@ -215,18 +174,6 @@ class PacmanAgent(Agent):
 
     def getMaxQ_Action(self, state):
         legals = state.getLegalActions()
-        # in the first half of trianing, the agent is forced not to stop
-        # or turn back while not being chased by the ghost
-        # if self.getEpisodesTotal()*1.0/self.getTrainingNum()<0.5:
-        #     if Directions.STOP in legals:
-        #         legals.remove(Directions.STOP)
-        #     if len(self.last_action) > 0 and state.getNumAgents() > 1:
-        #         last_action = self.last_action[-1]
-        #         distance0 = state.getPacmanPosition()[0]- state.getGhostPosition(1)[0]
-        #         distance1 = state.getPacmanPosition()[1]- state.getGhostPosition(1)[1]
-        #         if math.sqrt(distance0**2 + distance1**2) > 2:
-        #             if (Directions.REVERSE[last_action] in legals) and len(legals)>1:
-        #                 legals.remove(Directions.REVERSE[last_action])
             
         state_actions = Counter()
         for action in legals:
@@ -243,18 +190,6 @@ class PacmanAgent(Agent):
     
     def getMaxFeaturesQ_Action(self, state):
         legals = state.getLegalActions()
-        # in the first half of trianing, the agent is forced not to stop
-        # or turn back while not being chased by the ghost
-        # if self.getEpisodesTotal()*1.0/self.getTrainingNum()<0.5:
-        #     if Directions.STOP in legals:
-        #         legals.remove(Directions.STOP)
-        #     if len(self.last_action) > 0 and state.getNumAgents() > 1:
-        #         last_action = self.last_action[-1]
-        #         distance0 = state.getPacmanPosition()[0]- state.getGhostPosition(1)[0]
-        #         distance1 = state.getPacmanPosition()[1]- state.getGhostPosition(1)[1]
-        #         if math.sqrt(distance0**2 + distance1**2) > 2:
-        #             if (Directions.REVERSE[last_action] in legals) and len(legals)>1:
-        #                 legals.remove(Directions.REVERSE[last_action])
             
         state_actions = Counter()
         for action in legals:
@@ -268,7 +203,6 @@ class PacmanAgent(Agent):
             best_action = max(state_actions, key=state_actions.get)
 
         return best_action
-
 
     # called when the Pac Man agent is required to move
     def get_action(self, state):
@@ -298,24 +232,17 @@ class PacmanAgent(Agent):
             max_q = self.getMaxFeaturesQ_Values(state)
             self.updateFeaturesQ_Value(last_state, last_action, reward, max_q)
 
-        # epsilon greedy
+        # random action choice for exploring
         flip = self.coinFlip(self.epsilon)
-        #flip = (random.random() < self.epsilon)
         if flip:
-            action =  random.choice(legals) # explore
+            action =  random.choice(legals)
         else:
-            #action =  self.doTheRightThing(state)
-            #action = random.choice(legals)  # exploit
             action = self.getMaxFeaturesQ_Action(state)
 
         # update attributes
         self.score = state.getScore()
         self.last_state.append(state)
         self.last_action.append(action)
-
-        #legals = state.getLegalActions()
-        #legals.remove(Directions.STOP)
-        #action = legals[randint(0, len(legals) - 1)]
 
         return action
     
